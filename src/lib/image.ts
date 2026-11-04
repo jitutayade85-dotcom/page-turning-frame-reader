@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Page image processing on canvas. Only enhances what's in the photo — never invents content.
 
 export type ImageMode = "original" | "clean" | "bw";

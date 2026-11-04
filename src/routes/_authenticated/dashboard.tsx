@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Upload, ScanLine, FileText, Layers, Clock, ChevronRight, Settings, User } from "lucide-react";

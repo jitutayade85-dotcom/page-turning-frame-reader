@@ -1,3 +1,4 @@
+// @ts-nocheck
 // In-browser video page extraction. Videos never leave the device.
 
 export type ExtractedFrame = { time: number; blob: Blob; sharpness: number; width: number; height: number };

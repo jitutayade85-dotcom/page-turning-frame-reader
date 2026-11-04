@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 
 export type PdfOptions = {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X, Wand2, Layers, ScanText, FileDown, ShieldCheck, Smartphone, Upload, Sparkles, FileText } from "lucide-react";

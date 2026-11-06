@@ -173,7 +173,7 @@ export async function renderOutputPages(blob: Blob, edits: PageEdits, maxSide = 
     const ctx = part.getContext("2d");
     if (!ctx) throw new Error("Image processing is unavailable on this device.");
     ctx.drawImage(full, bounds.x, 0, bounds.width, full.height, 0, 0, bounds.width, full.height);
-    const image = await canvasToBlob(part);
+    const image = await canvasToBlob(part, "image/png");
     output.push(await renderPage(image, { ...defaultEdits(), mode: edits.mode, removeFingers: edits.removeFingers }, maxSide));
   }
   return output;

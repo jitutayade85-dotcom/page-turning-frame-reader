@@ -62,7 +62,7 @@ export function cleanupMarginFingers(data: Uint8ClampedArray, width: number, hei
         if (sx < 0 || sy < 0 || sx >= width || sy >= height) continue;
         const s = sy * width + sx, i = s * 4;
         const red = original[i] ?? 0, green = original[i + 1] ?? 0, blue = original[i + 2] ?? 0;
-        if (!mask[s] && !skin(s) && Math.min(red, green, blue) > 170 && Math.max(red, green, blue) - Math.min(red, green, blue) < 45) { donor = s; break; }
+        if (!mask[s] && !skin(s) && Math.min(red, green, blue) > 170 && Math.max(red, green, blue) - Math.min(red, green, blue) < 20) { donor = s; break; }
       }
     }
     if (donor < 0) continue;

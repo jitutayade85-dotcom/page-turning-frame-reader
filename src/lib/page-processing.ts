@@ -12,7 +12,7 @@ export function detectSpreadPixels(data: Uint8ClampedArray, width: number, heigh
     let sum = 0;
     for (let y = Math.floor(height * 0.1); y < height * 0.9; y++) {
       const i = (y * width + x) * 4;
-      sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      sum += ((data[i] ?? 0) + (data[i + 1] ?? 0) + (data[i + 2] ?? 0)) / 3;
     }
     scores.push(sum / Math.max(1, Math.ceil(height * 0.9) - Math.floor(height * 0.1)));
   }
@@ -31,7 +31,7 @@ export function cleanupMarginFingers(data: Uint8ClampedArray, width: number, hei
   const bandX = Math.max(1, Math.floor(width * 0.12));
   const bandY = Math.max(1, Math.floor(height * 0.12));
   const skin = (p: number) => {
-    const i = p * 4, r = data[i], g = data[i + 1], b = data[i + 2];
+    const i = p * 4, r = data[i] ?? 0, g = data[i + 1] ?? 0, b = data[i + 2] ?? 0;
     return r > 85 && g > 35 && b > 20 && r - g > 18 && r - b > 25 && g > b && r / Math.max(1, g) > 1.15;
   };
   const add = (p: number) => {
@@ -43,7 +43,9 @@ export function cleanupMarginFingers(data: Uint8ClampedArray, width: number, hei
   for (let x = 0; x < width; x++) { add(x); add((height - 1) * width + x); }
   for (let y = 0; y < height; y++) { add(y * width); add(y * width + width - 1); }
   for (let q = 0; q < queue.length; q++) {
-    const p = queue[q], x = p % width, y = Math.floor(p / width);
+    const p = queue[q];
+    if (p === undefined) continue;
+    const x = p % width, y = Math.floor(p / width);
     if (x > 0) add(p - 1); if (x < width - 1) add(p + 1);
     if (y > 0) add(p - width); if (y < height - 1) add(p + width);
   }
@@ -54,15 +56,17 @@ export function cleanupMarginFingers(data: Uint8ClampedArray, width: number, hei
     const x = p % width, y = Math.floor(p / width);
     let donor = -1;
     for (let r = 1; r <= Math.max(bandX, bandY) + 2 && donor < 0; r++) {
-      for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, -r], [r, -r], [-r, r]]) {
+      const offsets: [number, number][] = [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, -r], [r, -r], [-r, r]];
+      for (const [dx, dy] of offsets) {
         const sx = x + dx, sy = y + dy;
         if (sx < 0 || sy < 0 || sx >= width || sy >= height) continue;
         const s = sy * width + sx, i = s * 4;
-        if (!mask[s] && !skin(s) && Math.min(original[i], original[i + 1], original[i + 2]) > 170 && Math.max(original[i], original[i + 1], original[i + 2]) - Math.min(original[i], original[i + 1], original[i + 2]) < 45) { donor = s; break; }
+        const red = original[i] ?? 0, green = original[i + 1] ?? 0, blue = original[i + 2] ?? 0;
+        if (!mask[s] && !skin(s) && Math.min(red, green, blue) > 170 && Math.max(red, green, blue) - Math.min(red, green, blue) < 45) { donor = s; break; }
       }
     }
     if (donor < 0) continue;
-    for (let c = 0; c < 3; c++) data[p * 4 + c] = original[donor * 4 + c];
+    for (let c = 0; c < 3; c++) data[p * 4 + c] = original[donor * 4 + c] ?? 0;
     replaced++;
   }
   return replaced;

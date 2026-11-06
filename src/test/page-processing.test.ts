@@ -38,4 +38,13 @@ describe("margin finger cleanup", () => {
     expect(cleanupMarginFingers(pixels, 100, 100)).toBe(0);
     expect(pixels).toEqual(before);
   });
+  it("does not use a pale finger fringe as replacement paper", () => {
+    const pixels = paper(100, 100);
+    for (let y = 40; y < 60; y++) {
+      for (let x = 0; x < 8; x++) pixels.set([195, 115, 85, 255], (y * 100 + x) * 4);
+      pixels.set([253, 234, 220, 255], (y * 100 + 8) * 4);
+    }
+    cleanupMarginFingers(pixels, 100, 100);
+    expect([...pixels.slice((50 * 100 + 3) * 4, (50 * 100 + 3) * 4 + 4)]).toEqual([240, 238, 230, 255]);
+  });
 });

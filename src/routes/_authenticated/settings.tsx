@@ -16,7 +16,7 @@ import { deleteMyAccount } from "@/lib/account.functions";
 import { useSignOut } from "@/components/AppShell";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — BookScan AI" }, { name: "description", content: "Profile and account settings." }] }),
+  head: () => ({ meta: [{ title: "Settings — BookScan AI" }, { name: "description", content: "Profile and account settings." }, { property: "og:title", content: "Settings — BookScan AI" }, { property: "og:description", content: "Manage your BookScan AI profile and account preferences." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: SettingsPage,
 });
 

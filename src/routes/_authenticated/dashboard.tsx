@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { documentsQuery, profileQuery, formatBytes } from "@/lib/documents";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — BookScan AI" }, { name: "description", content: "Your BookScan AI dashboard." }] }),
+  head: () => ({ meta: [{ title: "Dashboard — BookScan AI" }, { name: "description", content: "Your BookScan AI dashboard." }, { property: "og:title", content: "Dashboard — BookScan AI" }, { property: "og:description", content: "Your scanned books and recent BookScan AI activity." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Dashboard,
 });
 

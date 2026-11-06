@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { autoExtract, captureFrame, loadVideo, validateVideo } from "@/lib/video";
-import { defaultEdits, detectCrop, renderPage, canvasToBlob, type PageEdits, type ImageMode } from "@/lib/image";
+import { defaultEdits, detectCrop, detectSpread, renderOutputPages, canvasToBlob, type PageEdits, type ImageMode } from "@/lib/image";
 import { buildPdf, type PdfOptions } from "@/lib/pdf";
 import { ocrPage } from "@/lib/account.functions";
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/scan")({
   validateSearch: (s: Record<string, unknown>): { start?: "upload" | "record" } => ({
     start: s.start === "upload" || s.start === "record" ? s.start : undefined,
   }),
-  head: () => ({ meta: [{ title: "Scan a book — BookScan AI" }, { name: "description", content: "Turn a book video into a PDF." }] }),
+  head: () => ({ meta: [{ title: "Scan a book — BookScan AI" }, { name: "description", content: "Split book spreads, clean page margins, and turn book videos into ordered PDFs." }, { property: "og:title", content: "Scan a book — BookScan AI" }, { property: "og:description", content: "Split book spreads, clean page margins, and export ordered PDFs." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
   component: ScanPage,
 });
 
@@ -35,6 +35,8 @@ function ScanPage() {
   const [busy, setBusy] = useState<{ f: number; label: string } | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [editing, setEditing] = useState<Page | null>(null);
+  const [autoSplit, setAutoSplit] = useState(true);
+  const [removeFingers, setRemoveFingers] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
@@ -55,7 +57,10 @@ function ScanPage() {
     setVideoUrl(URL.createObjectURL(f));
     setWarnings([]);
   }
-  const addBlob = (blob: Blob) => ({ id: uid(), blob, url: URL.createObjectURL(blob), edits: defaultEdits(), selected: true });
+  const addBlob = async (blob: Blob) => {
+    const spread = autoSplit ? await detectSpread(blob) : { enabled: false, gutter: 0.5 };
+    return { id: uid(), blob, url: URL.createObjectURL(blob), edits: { ...defaultEdits(), split: spread.enabled, gutter: spread.gutter, removeFingers }, selected: true };
+  };
 
   async function runAuto() {
     if (!videoUrl) return;
@@ -63,7 +68,9 @@ function ScanPage() {
     setBusy({ f: 0, label: "Starting…" });
     try {
       const { frames, warnings } = await autoExtract(videoUrl, (f, label) => setBusy({ f, label }), abort.current.signal);
-      setPages((p) => [...p, ...frames.map((fr) => addBlob(fr.blob))]);
+      const added = await Promise.all(frames.map((fr) => addBlob(fr.blob)));
+      if (abort.current.signal.aborted) throw new DOMException("Cancelled", "AbortError");
+      setPages((p) => [...p, ...added]);
       setWarnings(warnings);
       toast.success(`Found ${frames.length} page${frames.length === 1 ? "" : "s"}`);
     } catch (e) {
@@ -74,15 +81,23 @@ function ScanPage() {
   async function captureManual() {
     const v = manualVid.current;
     if (!v || !videoUrl) return;
-    const tmp = await loadVideo(videoUrl);
-    const fr = await captureFrame(tmp, v.currentTime);
-    setPages((p) => [...p, addBlob(fr.blob)]);
-    toast.success(`Captured frame at ${v.currentTime.toFixed(1)}s`);
+    try {
+      const tmp = await loadVideo(videoUrl);
+      const fr = await captureFrame(tmp, v.currentTime);
+      const added = await addBlob(fr.blob);
+      setPages((p) => [...p, added]);
+      toast.success(`Captured frame at ${v.currentTime.toFixed(1)}s`);
+    } catch (error) { toast.error((error as Error).message); }
   }
-  function addImages(files: FileList | null) {
+  async function addImages(files: FileList | null) {
     if (!files) return;
     const ok = [...files].filter((f) => f.type.startsWith("image/") && f.size < 30e6);
-    setPages((p) => [...p, ...ok.map(addBlob)]);
+    setBusy({ f: 0, label: "Detecting book spreads…" });
+    try {
+      const added = await Promise.all(ok.map(addBlob));
+      setPages((p) => [...p, ...added]);
+    } catch (error) { toast.error((error as Error).message); }
+    finally { setBusy(null); if (imgRef.current) imgRef.current.value = ""; }
   }
   const update = (id: string, fn: (p: Page) => Page) => setPages((ps) => ps.map((p) => (p.id === id ? fn(p) : p)));
   const move = (i: number, d: number) => setPages((ps) => { const a = [...ps]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });
@@ -99,7 +114,11 @@ function ScanPage() {
         <div className="flex flex-wrap gap-3">
           <Button variant="gold" className="rounded-xl" onClick={() => fileRef.current?.click()}><Upload /> Upload video</Button>
           <Button variant="outline" className="rounded-xl" onClick={() => camRef.current?.click()}><Camera /> Record with camera</Button>
-          <Button variant="outline" className="rounded-xl" onClick={() => imgRef.current?.click()}><ImagePlus /> Add images</Button>
+          <Button variant="outline" className="rounded-xl" disabled={!!busy} onClick={() => imgRef.current?.click()}><ImagePlus /> Add images</Button>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3">
+          <label className="flex items-center gap-3 text-sm"><Switch aria-label="Auto-split new spreads" checked={autoSplit} onCheckedChange={setAutoSplit} /> Auto-split new spreads</label>
+          <label className="flex items-center gap-3 text-sm"><Switch aria-label="Remove fingers on all pages" checked={removeFingers} onCheckedChange={(value) => { setRemoveFingers(value); setPages((ps) => ps.map((p) => ({ ...p, edits: { ...p.edits, removeFingers: value } }))); }} /> Remove fingers on all pages</label>
         </div>
         {videoUrl && (
           <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -118,11 +137,12 @@ function ScanPage() {
 
       {pages.length > 0 && (
         <section className="rounded-3xl border bg-card p-6 shadow-soft">
-          <h2 className="mb-4 font-semibold">2. Pages ({pages.filter((p) => p.selected).length} selected)</h2>
+          <h2 className="mb-4 font-semibold">2. Pages ({pages.filter((p) => p.selected).reduce((n, p) => n + (p.edits.split ? 2 : 1), 0)} selected)</h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {pages.map((p, i) => (
               <div key={p.id} className={`rounded-2xl border p-2 transition ${p.selected ? "border-primary bg-pale/40" : "opacity-50"}`}>
-                <button onClick={() => setEditing(p)} className="block w-full overflow-hidden rounded-xl bg-muted"><img src={p.url} alt={`Page ${i + 1}`} className="aspect-[3/4] w-full object-cover" style={{ transform: `rotate(${p.edits.rotation}deg)` }} /></button>
+                <Button variant="ghost" aria-label={`Edit capture ${i + 1}`} onClick={() => setEditing(p)} className="h-auto w-full overflow-hidden rounded-xl bg-muted p-0"><PagePreview page={p} /></Button>
+                {p.edits.split && <p className="mt-1 text-center text-xs text-muted-foreground">Left page · Right page</p>}
                 <div className="mt-2 flex items-center justify-between text-xs"><label className="flex items-center gap-1"><input type="checkbox" checked={p.selected} onChange={() => update(p.id, (x) => ({ ...x, selected: !x.selected }))} /> {i + 1}</label>
                   <div className="flex">
                     <button aria-label="Up" onClick={() => move(i, -1)} className="p-1"><ArrowUp className="h-3.5 w-3.5" /></button>
@@ -142,22 +162,47 @@ function ScanPage() {
   );
 }
 
+function PagePreview({ page }: { page: Page }) {
+  const [urls, setUrls] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true; let made: string[] = [];
+    renderOutputPages(page.blob, page.edits, 400).then((cs) => Promise.all(cs.map((c) => canvasToBlob(c)))).then((bs) => {
+      if (!active) return;
+      made = bs.map((b) => URL.createObjectURL(b)); setUrls(made);
+    }).catch((error) => { if (active) toast.error(error.message); });
+    return () => { active = false; made.forEach((u) => URL.revokeObjectURL(u)); };
+  }, [page.blob, page.edits]);
+  return <div className="flex aspect-[3/4] w-full items-center justify-center gap-1 overflow-hidden">{urls.length ? urls.map((url, i) => <img key={url} src={url} alt={page.edits.split ? (i === 0 ? "Left page" : "Right page") : "Processed page"} className={`${page.edits.split ? "w-[calc(50%-2px)]" : "w-full"} max-h-full object-contain`} />) : <Loader2 className="animate-spin" />}</div>;
+}
+
 function Editor({ page, onClose, onSave }: { page: Page; onClose: () => void; onSave: (e: PageEdits) => void }) {
   const [e, setE] = useState<PageEdits>(page.edits);
-  const [prev, setPrev] = useState<string>("");
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [previewError, setPreviewError] = useState("");
+  const imageArea = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    let url = ""; let live = true;
-    renderPage(page.blob, e, 1000).then((c) => canvasToBlob(c)).then((b) => { if (!live) return; url = URL.createObjectURL(b); setPrev(url); });
-    return () => { live = false; if (url) URL.revokeObjectURL(url); };
+    let urls: string[] = []; let live = true;
+    setPreviewError("");
+    renderOutputPages(page.blob, e, 1000).then((cs) => Promise.all(cs.map((c) => canvasToBlob(c)))).then((bs) => { if (!live) return; urls = bs.map((b) => URL.createObjectURL(b)); setPreviews(urls); }).catch((error) => { if (live) setPreviewError(error.message); });
+    return () => { live = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
   }, [page.blob, e]);
   const setCrop = (k: keyof PageEdits["crop"], v: number) => setE({ ...e, crop: { ...e.crop, [k]: v } });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={onClose}>
-      <div className="grid max-h-[90vh] w-full max-w-4xl gap-5 overflow-auto rounded-3xl bg-card p-6 md:grid-cols-2" onClick={(ev) => ev.stopPropagation()}>
-        <div className="flex items-center justify-center rounded-2xl bg-muted p-2">{prev ? <img src={prev} alt="Preview" className="max-h-[65vh] object-contain" /> : <Loader2 className="animate-spin" />}</div>
+      <div role="dialog" aria-modal="true" aria-label="Edit page" className="grid max-h-[90vh] w-full max-w-4xl gap-5 overflow-auto rounded-3xl bg-card p-6 md:grid-cols-2" onClick={(ev) => ev.stopPropagation()}>
+        <div className="flex items-center justify-center rounded-2xl bg-muted p-2">
+          {previewError ? <p role="alert">{previewError}</p> : previews.length ? <div ref={imageArea} className="relative flex w-full items-center justify-center overflow-hidden">
+            {previews.map((url, i) => <img key={url} src={url} alt={e.split ? (i === 0 ? "Left page preview" : "Right page preview") : "Page preview"} className="max-h-[65vh] min-w-0 object-contain" style={e.split ? { width: `${(i === 0 ? e.gutter : 1 - e.gutter) * 100}%` } : { width: "100%" }} />)}
+            {e.split && <div role="slider" aria-label="Gutter adjustment" aria-valuemin={20} aria-valuemax={80} aria-valuenow={Math.round(e.gutter * 100)} tabIndex={0} className="absolute inset-y-0 w-6 -translate-x-1/2 touch-none cursor-col-resize border-x-2 border-primary bg-primary/20 focus-visible:outline-2 focus-visible:outline-ring" style={{ left: `${e.gutter * 100}%` }} onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setE((current) => ({ ...current, gutter: Math.max(0.2, Math.min(0.8, current.gutter + (event.key === "ArrowLeft" ? -0.005 : 0.005))) })); } }} onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={(event) => { if (!event.currentTarget.hasPointerCapture(event.pointerId)) return; const rect = imageArea.current?.getBoundingClientRect(); if (rect) setE((current) => ({ ...current, gutter: Math.max(0.2, Math.min(0.8, (event.clientX - rect.left) / rect.width)) })); }} />}
+          </div> : <Loader2 className="animate-spin" />}
+        </div>
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Edit page</h3>
           <div className="grid grid-cols-3 gap-2">{(["original", "clean", "bw"] as ImageMode[]).map((m) => <Button key={m} variant={e.mode === m ? "gold" : "outline"} size="sm" onClick={() => setE({ ...e, mode: m })}>{m === "original" ? "Original" : m === "clean" ? "Clean Scan" : "B&W"}</Button>)}</div>
+          <label className="flex items-center justify-between gap-3 text-sm">Split two-page spread<Switch aria-label="Split two-page spread" checked={e.split} onCheckedChange={(split) => setE({ ...e, split })} /></label>
+          {e.split && <div className="space-y-2"><Label>Gutter: {Math.round(e.gutter * 100)}%</Label><Slider aria-label="Gutter position" value={[e.gutter * 100]} min={20} max={80} step={0.5} onValueChange={([v]) => setE({ ...e, gutter: v / 100 })} /><div className="flex justify-between text-xs text-muted-foreground"><span>1 · Left page</span><span>2 · Right page</span></div></div>}
+          <Button variant="outline" size="sm" onClick={async () => { try { const spread = await detectSpread(page.blob, e); setE({ ...e, split: spread.enabled, gutter: spread.gutter }); if (!spread.enabled) toast.info("No clear spread detected; manual splitting is available."); } catch (error) { toast.error((error as Error).message); } }}><Wand2 /> Detect spread</Button>
+          <label className="flex items-center justify-between gap-3 text-sm">Remove margin fingers<Switch aria-label="Remove margin fingers" checked={e.removeFingers} onCheckedChange={(removeFingers) => setE({ ...e, removeFingers })} /></label>
           <Button variant="outline" size="sm" onClick={async () => setE({ ...e, crop: await detectCrop(page.blob) })}><CropIcon /> Auto-detect page edges</Button>
           {(["top", "bottom", "left", "right"] as const).map((k) => (
             <div key={k}><Label className="capitalize">Crop {k}</Label><Slider value={[e.crop[k] * 100]} max={45} step={0.5} onValueChange={([v]) => setCrop(k, v / 100)} /></div>
@@ -180,6 +225,8 @@ function Exporter({ pages }: { pages: Page[] }) {
   const [pdf, setPdf] = useState<{ bytes: Uint8Array; url: string; texts: string[] } | null>(null);
   const abort = useRef<AbortController | null>(null);
 
+  useEffect(() => { setPdf((current) => { if (current) URL.revokeObjectURL(current.url); return null; }); }, [pages, opts, searchable]);
+
   async function generate() {
     abort.current = new AbortController();
     const sig = abort.current.signal;
@@ -188,14 +235,20 @@ function Exporter({ pages }: { pages: Page[] }) {
       for (let i = 0; i < pages.length; i++) {
         if (sig.aborted) throw new DOMException("Cancelled", "AbortError");
         setBusy({ f: i / pages.length * (searchable ? 0.4 : 0.7), label: `Processing page ${i + 1}/${pages.length}` });
-        const c = await renderPage(pages[i].blob, pages[i].edits);
-        rendered.push({ jpeg: new Uint8Array(await (await canvasToBlob(c)).arrayBuffer()), width: c.width, height: c.height });
+        const output = await renderOutputPages(pages[i].blob, pages[i].edits);
+        for (const c of output) rendered.push({ jpeg: new Uint8Array(await (await canvasToBlob(c)).arrayBuffer()), width: c.width, height: c.height });
       }
       if (searchable) {
         for (let i = 0; i < rendered.length; i++) {
           if (sig.aborted) throw new DOMException("Cancelled", "AbortError");
           setBusy({ f: 0.4 + (i / rendered.length) * 0.4, label: `Reading text on page ${i + 1}/${rendered.length}` });
-          const small = await renderPage(pages[i].blob, pages[i].edits, 1600);
+          const small = document.createElement("canvas");
+          const bitmap = await createImageBitmap(new Blob([rendered[i].jpeg as BlobPart], { type: "image/jpeg" }));
+          const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+          small.width = Math.round(bitmap.width * scale); small.height = Math.round(bitmap.height * scale);
+          const ctx = small.getContext("2d");
+          if (!ctx) throw new Error("Image processing is unavailable.");
+          ctx.drawImage(bitmap, 0, 0, small.width, small.height); bitmap.close();
           const dataUrl = small.toDataURL("image/jpeg", 0.85);
           const { text } = await ocr({ data: { image: dataUrl } });
           rendered[i].text = text;
@@ -212,10 +265,11 @@ function Exporter({ pages }: { pages: Page[] }) {
     if (!pdf) return;
     setBusy({ f: 0.3, label: "Saving to your library…" });
     const { data: u } = await supabase.auth.getUser();
-    const path = `${u.user!.id}/${crypto.randomUUID()}.pdf`;
+    if (!u.user) { setBusy(null); return toast.error("Please sign in to save your PDF."); }
+    const path = `${u.user.id}/${crypto.randomUUID()}.pdf`;
     const up = await supabase.storage.from("pdfs").upload(path, new Blob([pdf.bytes as BlobPart], { type: "application/pdf" }), { contentType: "application/pdf" });
     if (up.error) { setBusy(null); return toast.error(up.error.message); }
-    const { error } = await supabase.from("documents").insert({ title: opts.title, file_path: path, page_count: pages.length, file_size: pdf.bytes.byteLength, searchable, user_id: u.user!.id });
+    const { error } = await supabase.from("documents").insert({ title: opts.title, file_path: path, page_count: pdf.texts.length, file_size: pdf.bytes.byteLength, searchable, user_id: u.user.id });
     setBusy(null);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["documents"] });

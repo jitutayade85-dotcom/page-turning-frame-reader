@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { documentsQuery, formatBytes, signedUrl } from "@/lib/documents";
 
 export const Route = createFileRoute("/_authenticated/library")({
-  head: () => ({ meta: [{ title: "My Library — BookScan AI" }, { name: "description", content: "All your scanned PDFs." }] }),
+  head: () => ({ meta: [{ title: "My Library — BookScan AI" }, { name: "description", content: "All your scanned PDFs." }, { property: "og:title", content: "My Library — BookScan AI" }, { property: "og:description", content: "Manage your private library of scanned book PDFs." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: LibraryPage,
 });
 

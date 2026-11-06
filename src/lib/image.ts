@@ -1,11 +1,12 @@
 // @ts-nocheck
 // Page image processing on canvas. Only enhances what's in the photo — never invents content.
+import { cleanupMarginFingers, detectSpreadPixels, splitBounds } from "./page-processing";
 
 export type ImageMode = "original" | "clean" | "bw";
 export type Crop = { top: number; right: number; bottom: number; left: number }; // fractions 0..0.45
-export type PageEdits = { rotation: 0 | 90 | 180 | 270; crop: Crop; mode: ImageMode };
+export type PageEdits = { rotation: 0 | 90 | 180 | 270; crop: Crop; mode: ImageMode; split: boolean; gutter: number; removeFingers: boolean };
 
-export const defaultEdits = (): PageEdits => ({ rotation: 0, crop: { top: 0, right: 0, bottom: 0, left: 0 }, mode: "clean" });
+export const defaultEdits = (): PageEdits => ({ rotation: 0, crop: { top: 0, right: 0, bottom: 0, left: 0 }, mode: "clean", split: false, gutter: 0.5, removeFingers: false });
 
 export async function blobToBitmap(blob: Blob) {
   return await createImageBitmap(blob);
@@ -54,7 +55,8 @@ export async function detectCrop(blob: Blob): Promise<Crop> {
   const bmp = await blobToBitmap(blob);
   const w = 200, h = Math.round((bmp.height / bmp.width) * 200);
   const c = new OffscreenCanvas(w, h);
-  const ctx = c.getContext("2d")!;
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("Image processing is unavailable on this device.");
   ctx.drawImage(bmp, 0, 0, w, h);
   const d = ctx.getImageData(0, 0, w, h).data;
   const g = new Float32Array(w * h);
@@ -81,11 +83,18 @@ export async function renderPage(blob: Blob, edits: PageEdits, maxSide = 2400): 
   const c = document.createElement("canvas");
   c.width = rot % 180 === 0 ? cw : ch;
   c.height = rot % 180 === 0 ? ch : cw;
-  const ctx = c.getContext("2d", { willReadFrequently: true })!;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Image processing is unavailable on this device.");
   ctx.translate(c.width / 2, c.height / 2);
   ctx.rotate((rot * Math.PI) / 180);
   ctx.drawImage(bmp, sx, sy, sw, sh, -cw / 2, -ch / 2, cw, ch);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  bmp.close();
+  if (edits.removeFingers) {
+    const pixels = ctx.getImageData(0, 0, c.width, c.height);
+    cleanupMarginFingers(pixels.data, c.width, c.height);
+    ctx.putImageData(pixels, 0, 0);
+  }
   if (edits.mode !== "original") enhance(ctx, c.width, c.height, edits.mode);
   return c;
 }
@@ -144,5 +153,28 @@ function enhance(ctx: CanvasRenderingContext2D, w: number, h: number, mode: Imag
 }
 
 export function canvasToBlob(c: HTMLCanvasElement, type = "image/jpeg", q = 0.9) {
-  return new Promise<Blob>((r) => c.toBlob((b) => r(b!), type, q));
+  return new Promise<Blob>((resolve, reject) => c.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not encode the page image.")), type, q));
+}
+
+export async function detectSpread(blob: Blob, edits = defaultEdits()) {
+  const canvas = await renderPage(blob, { ...edits, mode: "original", removeFingers: false }, 300);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Image processing is unavailable on this device.");
+  return detectSpreadPixels(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+}
+
+export async function renderOutputPages(blob: Blob, edits: PageEdits, maxSide = 2400) {
+  // Split before cleanup: the inner gutter becomes a margin on each output page.
+  const full = await renderPage(blob, { ...edits, mode: "original", removeFingers: false }, maxSide * (edits.split ? 2 : 1));
+  const output: HTMLCanvasElement[] = [];
+  for (const bounds of splitBounds(full.width, edits.split, edits.gutter)) {
+    const part = document.createElement("canvas");
+    part.width = bounds.width; part.height = full.height;
+    const ctx = part.getContext("2d");
+    if (!ctx) throw new Error("Image processing is unavailable on this device.");
+    ctx.drawImage(full, bounds.x, 0, bounds.width, full.height, 0, 0, bounds.width, full.height);
+    const image = await canvasToBlob(part, "image/png");
+    output.push(await renderPage(image, { ...defaultEdits(), mode: edits.mode, removeFingers: edits.removeFingers }, maxSide));
+  }
+  return output;
 }

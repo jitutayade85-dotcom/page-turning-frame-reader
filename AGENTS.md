@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep spread splitting and conservative edge-connected finger cleanup in the shared browser image pipeline; review, OCR, and PDF must consume the same left-to-right output pages so edits never diverge between display and export.

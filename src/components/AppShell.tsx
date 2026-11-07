@@ -1,15 +1,17 @@
 // @ts-nocheck
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { LayoutDashboard, ScanLine, Library, Settings, LogOut } from "lucide-react";
+import { Home, ScanLine, Library, Settings, LogOut, Wifi } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/Logo";
+import { LogoMark } from "@/components/Logo";
+import { useAuthUser } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
-const items = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/scan", label: "Scan", icon: ScanLine },
+const tabs = [
+  { to: "/dashboard", label: "Home", icon: Home },
   { to: "/library", label: "Library", icon: Library },
+  null,
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -24,31 +26,76 @@ export function useSignOut() {
   };
 }
 
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const signOut = useSignOut();
+  const { user } = useAuthUser();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const name = (user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Reader") as string;
+  const initial = name.charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Logo to="/dashboard" />
-          <nav className="hidden items-center gap-1 md:flex">
-            {items.map((i) => (
-              <Link key={i.to} to={i.to} className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-pale text-foreground" }}>
-                <i.icon className="h-4 w-4" /> {i.label}
+    <div className="min-h-[100dvh] bg-gradient-hero md:flex md:items-center md:justify-center md:py-8">
+      <div className="@container relative mx-auto flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden bg-background md:h-[860px] md:max-h-[calc(100dvh-4rem)] md:rounded-[2.75rem] md:border-[10px] md:border-foreground/90 md:shadow-gold">
+        {/* Top bar */}
+        <header className="z-20 shrink-0 bg-background/90 px-5 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] backdrop-blur-xl">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <LogoMark className="h-10 w-10 shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate text-xs text-muted-foreground">{greeting()} 👋</p>
+                <p className="truncate font-display text-base font-bold">{name}</p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="flex items-center gap-1 rounded-full bg-pale px-2.5 py-1 text-[11px] font-semibold text-primary">
+                <Wifi className="h-3 w-3" /> Online
+              </span>
+              <button onClick={signOut} aria-label="Log out" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-gold font-bold text-primary-foreground shadow-gold transition-transform active:scale-90">
+                {initial}
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-background bg-card text-foreground">
+                  <LogOut className="h-2.5 w-2.5" />
+                </span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main key={path} className="flex-1 overflow-y-auto px-4 pb-28 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300 [&_.rounded-xl]:rounded-2xl">
+          {children}
+        </main>
+
+        {/* Bottom tab bar */}
+        <nav className="absolute inset-x-3 bottom-[max(env(safe-area-inset-bottom),0.75rem)] z-30">
+          <div className="relative grid h-16 grid-cols-5 items-center rounded-3xl border bg-card/95 shadow-soft backdrop-blur-xl">
+            {tabs.slice(0, 2).map((t) => <Tab key={t.to} t={t} active={path.startsWith(t.to)} />)}
+            <div className="flex justify-center">
+              <Link to="/scan" aria-label="Scan" className={cn("-mt-9 flex h-16 w-16 items-center justify-center rounded-full border-4 border-background bg-gradient-gold text-primary-foreground shadow-gold transition-transform hover:scale-105 active:scale-90", path.startsWith("/scan") && "ring-4 ring-gold-bright/40")}>
+                <ScanLine className="h-7 w-7" />
               </Link>
-            ))}
-            <button onClick={signOut} className="ml-2 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"><LogOut className="h-4 w-4" /> Log out</button>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 md:py-10 animate-in fade-in duration-300">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        {items.map((i) => (
-          <Link key={i.to} to={i.to} className="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground" activeProps={{ className: "text-primary" }}>
-            <i.icon className="h-5 w-5" /> {i.label}
-          </Link>
-        ))}
-      </nav>
+            </div>
+            {tabs.slice(3).map((t) => <Tab key={t.to} t={t} active={path.startsWith(t.to)} />)}
+            <div className="flex justify-center">
+              <Link to="/scan" className="text-[11px] font-semibold text-muted-foreground">Scan</Link>
+            </div>
+          </div>
+        </nav>
+      </div>
     </div>
+  );
+}
+
+function Tab({ t, active }: { t: { to: string; label: string; icon: any }; active: boolean }) {
+  return (
+    <Link to={t.to} className="flex flex-col items-center gap-0.5 transition-transform active:scale-90">
+      <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition-all duration-300", active ? "bg-pale text-primary" : "text-muted-foreground")}>
+        <t.icon className={cn("h-5 w-5 transition-transform", active && "scale-110")} />
+      </span>
+      <span className={cn("text-[11px] font-medium", active ? "text-primary" : "text-muted-foreground")}>{t.label}</span>
+    </Link>
   );
 }

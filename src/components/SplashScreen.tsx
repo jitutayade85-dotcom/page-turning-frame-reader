@@ -3,13 +3,12 @@ import { useEffect, useState } from "react";
 const DURATION = 2300;
 
 export function SplashScreen() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("bookscan-splash")) return;
+    if (sessionStorage.getItem("bookscan-splash")) return setShow(false);
     sessionStorage.setItem("bookscan-splash", "1");
-    setShow(true);
     const t = setTimeout(() => setLeaving(true), DURATION);
     return () => clearTimeout(t);
   }, []);

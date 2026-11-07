@@ -1,4 +1,10 @@
 # Scan enhancements
+- [ ] Optimize splash timing and returning-user dismissal.
+- [ ] Replace pixel sorting with histogram contrast thresholds.
+- [ ] Cache and schedule processed previews with safe resource cleanup.
+- [ ] Limit OCR to three concurrent calls with per-page recovery.
+- [ ] Expand the desktop workspace while retaining the mobile shell.
+- [ ] Run regression tests and verify signed-in scanning across screen sizes.
 - [x] Add spread detection, adjustable splitting, and ordered output.
 - [x] Add optional margin finger cleanup globally and per page.
 - [x] Integrate processed review previews, OCR, and PDF export.

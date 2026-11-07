@@ -80,7 +80,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             {tabs.slice(3).map((t) => <Tab key={t.to} t={t} active={path.startsWith(t.to)} />)}
             <div className="flex justify-center">
-              <Link to="/scan" className="text-[11px] font-semibold text-muted-foreground">Scan</Link>
+              <button onClick={signOut} className="flex flex-col items-center gap-0.5 text-muted-foreground transition-transform active:scale-90">
+                <span className="flex h-8 w-12 items-center justify-center rounded-full"><LogOut className="h-5 w-5" /></span>
+                <span className="text-[11px] font-medium">Log out</span>
+              </button>
             </div>
           </div>
         </nav>

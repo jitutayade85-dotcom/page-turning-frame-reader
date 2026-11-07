@@ -77,10 +77,10 @@ function SettingsPage() {
       </Card>
       {hasEmail && (
         <Card title="Change password">
-          <form onSubmit={changePw} className="grid gap-3 sm:grid-cols-2">
+          <form onSubmit={changePw} className="grid gap-3 @sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Current password</Label><Input type="password" value={curPw} onChange={(e) => setCurPw(e.target.value)} className="h-11 rounded-xl" /></div>
             <div className="space-y-1.5"><Label>New password</Label><Input type="password" minLength={8} required value={newPw} onChange={(e) => setNewPw(e.target.value)} className="h-11 rounded-xl" /></div>
-            <Button variant="outline" className="rounded-xl sm:col-span-2">Update password</Button>
+            <Button variant="outline" className="rounded-xl @sm:col-span-2">Update password</Button>
           </form>
         </Card>
       )}

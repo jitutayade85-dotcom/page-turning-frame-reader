@@ -13,7 +13,9 @@ export async function readPages<T>(
     while (next < pages.length) {
       check();
       const index = next++;
-      try { texts[index] = await read(pages[index], index); }
+      const page = pages[index];
+      if (page === undefined) continue;
+      try { texts[index] = await read(page, index); }
       catch (error) {
         if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
         failed.push(index + 1);

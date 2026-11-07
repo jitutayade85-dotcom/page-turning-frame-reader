@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Page image processing on canvas. Only enhances what's in the photo — never invents content.
 import { cleanupMarginFingers, detectSpreadPixels, splitBounds } from "./page-processing";
+import { contrastThresholds } from "./contrast";
 
 export type ImageMode = "original" | "clean" | "bw";
 export type Crop = { top: number; right: number; bottom: number; left: number }; // fractions 0..0.45
@@ -140,8 +141,7 @@ function enhance(ctx: CanvasRenderingContext2D, w: number, h: number, mode: Imag
     }
   } else {
     // Clean scan: apply luminance gain to colour channels, then contrast stretch
-    const sorted = Float32Array.from(sharp).sort();
-    const lo = sorted[Math.floor(n * 0.01)], hi = sorted[Math.floor(n * 0.98)];
+    const { lo, hi } = contrastThresholds(sharp);
     const range = Math.max(1, hi - lo);
     for (let i = 0; i < n; i++) {
       const target = Math.max(0, Math.min(255, ((sharp[i] - lo) / range) * 255));

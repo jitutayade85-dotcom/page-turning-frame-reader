@@ -1,27 +1,32 @@
 import { useEffect, useState } from "react";
 
-const DURATION = 2300;
+const DURATION = 600;
 
 export function SplashScreen() {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("bookscan-splash")) return setShow(false);
-    sessionStorage.setItem("bookscan-splash", "1");
-    const t = setTimeout(() => setLeaving(true), DURATION);
+    try {
+      if (localStorage.getItem("bookscan-splash") || sessionStorage.getItem("bookscan-splash")) return;
+      localStorage.setItem("bookscan-splash", "1");
+      sessionStorage.setItem("bookscan-splash", "1");
+    } catch { /* Storage may be disabled; startup must still finish. */ }
+    setShow(true);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = setTimeout(() => setLeaving(true), reduced ? 0 : DURATION);
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
     if (!leaving) return;
-    const t = setTimeout(() => setShow(false), 500);
+    const t = setTimeout(() => setShow(false), 200);
     return () => clearTimeout(t);
   }, [leaving]);
 
   if (!show) return null;
 
-  const particles = Array.from({ length: 14 }, (_, i) => i);
+  const particles = Array.from({ length: 6 }, (_, i) => i);
 
   return (
     <div
@@ -29,11 +34,10 @@ export function SplashScreen() {
       aria-label="Skip intro"
       tabIndex={0}
       onClick={() => setLeaving(true)}
-      onKeyDown={() => setLeaving(true)}
-      className={`fixed inset-0 z-[100] flex cursor-pointer flex-col items-center justify-center bg-gradient-hero transition-opacity duration-500 ${leaving ? "opacity-0" : "opacity-100"}`}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setLeaving(true); }}
+      className={`fixed inset-0 z-[100] flex cursor-pointer flex-col items-center justify-center bg-background transition-opacity duration-200 ${leaving ? "pointer-events-none opacity-0" : "opacity-100"}`}
     >
       <div className="splash-enter relative w-[78vw] max-w-[360px]">
-        <div className="absolute inset-0 -z-10 rounded-full bg-gold-bright/40 blur-3xl splash-glow" />
         <svg viewBox="0 0 320 200" className="w-full drop-shadow-[0_20px_30px_color-mix(in_oklab,var(--gold-deep)_35%,transparent)]">
           <defs>
             <linearGradient id="cover" x1="0" x2="1">
@@ -85,10 +89,10 @@ export function SplashScreen() {
           />
         ))}
       </div>
-      <h1 className="splash-enter mt-10 text-3xl font-bold text-foreground" style={{ animationDelay: "0.2s" }}>
+      <h1 className="splash-enter mt-10 text-3xl font-bold text-foreground">
         BookScan <span className="text-primary">AI</span>
       </h1>
-      <div className="splash-enter mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-muted" style={{ animationDelay: "0.3s" }}>
+      <div className="splash-enter mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-muted">
         <div className="splash-progress h-full rounded-full bg-gradient-gold" style={{ animationDuration: `${DURATION}ms` }} />
       </div>
       <p className="mt-6 text-xs text-muted-foreground">Tap to skip</p>

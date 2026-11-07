@@ -69,7 +69,7 @@ function LibraryPage() {
         <div><h1 className="text-3xl font-bold">My Library</h1><p className="text-muted-foreground">{docs.length} private documents</p></div>
         <Button variant="gold" className="rounded-xl" asChild><Link to="/scan"><Plus /> New scan</Link></Button>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 @sm:flex-row">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Search PDFs…" value={q} onChange={(e) => setQ(e.target.value)} className="h-11 rounded-xl bg-card pl-9" /></div>
         <select value={sort} onChange={(e) => setSort(e.target.value as "new" | "old")} className="h-11 rounded-xl border bg-card px-3 text-sm">
           <option value="new">Newest first</option><option value="old">Oldest first</option>
@@ -78,7 +78,7 @@ function LibraryPage() {
       {isLoading ? <p className="text-muted-foreground">Loading…</p> : list.length === 0 ? (
         <div className="rounded-3xl border border-dashed bg-card p-12 text-center"><FileText className="mx-auto h-10 w-10 text-primary" /><p className="mt-3 font-medium">{q ? "No matches" : "Your library is empty"}</p></div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 @sm:grid-cols-2 @lg:grid-cols-3">
           {list.map((d) => (
             <div key={d.id} className="group rounded-3xl border bg-card p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-gold">
               <button onClick={() => open(d)} className="flex h-32 w-full items-center justify-center rounded-2xl bg-gradient-to-br from-pale to-cream"><FileText className="h-12 w-12 text-primary transition group-hover:scale-110" /></button>

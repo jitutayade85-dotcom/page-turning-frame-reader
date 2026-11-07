@@ -18,10 +18,10 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-gold p-7 shadow-gold sm:p-10">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-gold p-7 shadow-gold @sm:p-10">
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-lemon/40 blur-2xl" />
         <p className="text-sm font-medium text-primary-foreground/80">Welcome back,</p>
-        <h1 className="mt-1 text-3xl font-bold text-primary-foreground sm:text-4xl">{name} 👋</h1>
+        <h1 className="mt-1 text-3xl font-bold text-primary-foreground @sm:text-4xl">{name} 👋</h1>
         <p className="mt-2 max-w-md text-primary-foreground/90">Ready to digitize another book?</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button size="lg" variant="secondary" className="h-11 rounded-xl" asChild><Link to="/scan" search={{ start: "upload" }}><Upload /> Upload Video</Link></Button>
@@ -29,14 +29,14 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 @sm:grid-cols-3">
         <Stat icon={FileText} label="PDFs created" value={docs.length} />
         <Stat icon={Layers} label="Pages scanned" value={totalPages} />
         <Stat icon={Clock} label="Last scan" value={docs[0] ? new Date(docs[0].created_at).toLocaleDateString() : "—"} />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="rounded-3xl border bg-card p-6 shadow-soft lg:col-span-2">
+      <div className="grid gap-6 @lg:grid-cols-3">
+        <section className="rounded-3xl border bg-card p-6 shadow-soft @lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent PDFs & history</h2>
             <Link to="/library" className="flex items-center text-sm font-medium text-primary">View all <ChevronRight className="h-4 w-4" /></Link>
@@ -58,7 +58,7 @@ function Dashboard() {
                     <p className="truncate font-medium">{d.title}</p>
                     <p className="text-xs text-muted-foreground">{d.page_count} pages · {formatBytes(d.file_size)} · {new Date(d.created_at).toLocaleString()}</p>
                   </div>
-                  <span className="hidden rounded-full bg-pale px-2.5 py-1 text-xs font-medium sm:inline">{d.searchable ? "Searchable" : "Image PDF"}</span>
+                  <span className="hidden rounded-full bg-pale px-2.5 py-1 text-xs font-medium @sm:inline">{d.searchable ? "Searchable" : "Image PDF"}</span>
                 </li>
               ))}
             </ul>

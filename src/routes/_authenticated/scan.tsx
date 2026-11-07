@@ -121,7 +121,7 @@ function ScanPage() {
           <label className="flex items-center gap-3 text-sm"><Switch aria-label="Remove fingers on all pages" checked={removeFingers} onCheckedChange={(value) => { setRemoveFingers(value); setPages((ps) => ps.map((p) => ({ ...p, edits: { ...p.edits, removeFingers: value } }))); }} /> Remove fingers on all pages</label>
         </div>
         {videoUrl && (
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="mt-5 grid gap-5 @md:grid-cols-2">
             <video ref={manualVid} src={videoUrl} controls playsInline className="w-full rounded-2xl bg-foreground/90" />
             <div className="space-y-3">
               <div className="rounded-2xl bg-pale/60 p-4"><p className="flex items-center gap-2 font-semibold"><Wand2 className="h-4 w-4 text-primary" /> Automatic</p><p className="mb-3 text-sm text-muted-foreground">Detects each page, keeps the sharpest frame, removes duplicates.</p><Button variant="gold" disabled={!!busy} onClick={runAuto} className="rounded-xl">Extract pages</Button></div>
@@ -138,7 +138,7 @@ function ScanPage() {
       {pages.length > 0 && (
         <section className="rounded-3xl border bg-card p-6 shadow-soft">
           <h2 className="mb-4 font-semibold">2. Pages ({pages.filter((p) => p.selected).reduce((n, p) => n + (p.edits.split ? 2 : 1), 0)} selected)</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 @sm:grid-cols-3 @lg:grid-cols-5">
             {pages.map((p, i) => (
               <div key={p.id} className={`rounded-2xl border p-2 transition ${p.selected ? "border-primary bg-pale/40" : "opacity-50"}`}>
                 <Button variant="ghost" aria-label={`Edit capture ${i + 1}`} onClick={() => setEditing(p)} className="h-auto w-full overflow-hidden rounded-xl bg-muted p-0"><PagePreview page={p} /></Button>
@@ -189,7 +189,7 @@ function Editor({ page, onClose, onSave }: { page: Page; onClose: () => void; on
   const setCrop = (k: keyof PageEdits["crop"], v: number) => setE({ ...e, crop: { ...e.crop, [k]: v } });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label="Edit page" className="grid max-h-[90vh] w-full max-w-4xl gap-5 overflow-auto rounded-3xl bg-card p-6 md:grid-cols-2" onClick={(ev) => ev.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label="Edit page" className="grid max-h-[90vh] w-full max-w-4xl gap-5 overflow-auto rounded-3xl bg-card p-6 @md:grid-cols-2" onClick={(ev) => ev.stopPropagation()}>
         <div className="flex items-center justify-center rounded-2xl bg-muted p-2">
           {previewError ? <p role="alert">{previewError}</p> : previews.length ? <div ref={imageArea} className="relative flex w-full items-center justify-center overflow-hidden">
             {previews.map((url, i) => <img key={url} src={url} alt={e.split ? (i === 0 ? "Left page preview" : "Right page preview") : "Page preview"} className="max-h-[65vh] min-w-0 object-contain" style={e.split ? { width: `${(i === 0 ? e.gutter : 1 - e.gutter) * 100}%` } : { width: "100%" }} />)}
@@ -286,7 +286,7 @@ function Exporter({ pages }: { pages: Page[] }) {
   return (
     <section className="rounded-3xl border bg-card p-6 shadow-soft">
       <h2 className="mb-4 font-semibold">3. PDF</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 @sm:grid-cols-2 @lg:grid-cols-3">
         <div className="space-y-1.5"><Label>Title</Label><Input value={opts.title} onChange={(e) => setOpts({ ...opts, title: e.target.value })} className="rounded-xl" /></div>
         <div className="space-y-1.5"><Label>Page size</Label><select className="h-9 w-full rounded-xl border bg-card px-3 text-sm" value={opts.pageSize} onChange={(e) => setOpts({ ...opts, pageSize: e.target.value as PdfOptions["pageSize"] })}><option value="a4">A4</option><option value="original">Original</option></select></div>
         <div className="space-y-1.5"><Label>Orientation</Label><select className="h-9 w-full rounded-xl border bg-card px-3 text-sm" value={opts.orientation} onChange={(e) => setOpts({ ...opts, orientation: e.target.value as PdfOptions["orientation"] })}><option value="auto">Match page</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>

@@ -6,9 +6,12 @@ import { AppShell } from "@/components/AppShell";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // Local UI gate only; server handlers and database policies verify access.
+    // getSession refreshes expired tokens without revalidating on every tab.
+    const { data, error } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (error || !user) throw redirect({ to: "/auth" });
+    return { user };
   },
   component: () => (
     <AppShell>

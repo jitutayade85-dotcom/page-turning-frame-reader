@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="relative grid h-16 grid-cols-5 items-center rounded-3xl border bg-card/95 shadow-soft backdrop-blur-xl md:flex md:h-auto md:flex-col md:items-stretch md:gap-2 md:rounded-none md:border-0 md:bg-transparent md:shadow-none md:backdrop-blur-none">
             {tabs.slice(0, 2).map((t) => <Tab key={t.to} t={t} active={path.startsWith(t.to)} />)}
             <div className="flex justify-center md:my-2">
-              <Link to="/scan" aria-label="Scan" className={cn("-mt-9 flex h-16 w-16 items-center justify-center rounded-full border-4 border-background bg-gradient-gold text-primary-foreground shadow-gold transition-transform hover:scale-105 active:scale-90 md:mt-0 md:h-12 md:w-full md:gap-3 md:rounded-xl md:border-0 md:hover:scale-100", path.startsWith("/scan") && "ring-4 ring-gold-bright/40")}>
+              <Link to="/scan" preload="intent" aria-label="Scan" className={cn("-mt-9 flex h-16 w-16 items-center justify-center rounded-full border-4 border-background bg-gradient-gold text-primary-foreground shadow-gold transition-transform hover:scale-105 active:scale-90 md:mt-0 md:h-12 md:w-full md:gap-3 md:rounded-xl md:border-0 md:hover:scale-100", path.startsWith("/scan") && "ring-4 ring-gold-bright/40")}>
                 <ScanLine className="h-7 w-7" />
                 <span className="hidden text-sm font-semibold md:inline">Scan a book</span>
               </Link>
@@ -97,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Tab({ t, active }: { t: { to: string; label: string; icon: any }; active: boolean }) {
   return (
-    <Link to={t.to} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-0.5 transition-transform active:scale-90 md:flex-row md:gap-3 md:rounded-xl md:p-2", active && "md:bg-pale")}>
+    <Link to={t.to} preload="intent" aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-0.5 transition-transform active:scale-90 md:flex-row md:gap-3 md:rounded-xl md:p-2", active && "md:bg-pale")}>
       <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition-all duration-300", active ? "bg-pale text-primary" : "text-muted-foreground")}>
         <t.icon className={cn("h-5 w-5 transition-transform", active && "scale-110")} />
       </span>

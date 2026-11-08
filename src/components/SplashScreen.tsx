@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const DURATION = 600;
+const DURATION = 2800;
 
 export function SplashScreen() {
   const [show, setShow] = useState(false);

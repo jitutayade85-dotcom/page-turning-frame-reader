@@ -14,7 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { autoExtract, captureFrame, loadVideo, validateVideo } from "@/lib/video";
 import { defaultEdits, detectCrop, detectSpread, renderOutputPages, canvasToBlob, type PageEdits, type ImageMode } from "@/lib/image";
-import { buildPdf, type PdfOptions } from "@/lib/pdf";
+import type { PdfOptions } from "@/lib/pdf";
 import { ocrPage } from "@/lib/account.functions";
 import { usePagePreview } from "@/hooks/use-page-preview";
 import { previewKey } from "@/lib/preview-cache";
@@ -264,6 +264,7 @@ function Exporter({ pages }: { pages: Page[] }) {
         result.texts.forEach((text, i) => { rendered[i].text = text; });
         failed = result.failed;
       }
+      const { buildPdf } = await import("@/lib/pdf");
       const bytes = await buildPdf(rendered, opts, (f) => setBusy({ f: 0.8 + f * 0.2, label: "Building PDF…" }), sig);
       if (sig.aborted) throw new DOMException("Cancelled", "AbortError");
       setPdf({ bytes, url: URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" })), texts: rendered.map((r) => r.text ?? ""), failed });

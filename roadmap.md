@@ -1,4 +1,6 @@
 # Scan enhancements
+- [x] Set book intro to 2.8 seconds; verify timing, skipping and return visits with tests and desktop/mobile browser checks.
+- [x] Diagnose repeated display auth requests and immediate query refetches; reuse local display sessions and fresh data, defer PDF engine until export. Three regression checks failed before and pass after changes; public desktop/mobile controls verified.
 - [x] Optimize splash timing and returning-user dismissal.
 - [x] Replace pixel sorting with histogram contrast thresholds.
 - [x] Cache and schedule processed previews with safe resource cleanup.
@@ -9,4 +11,4 @@
 - [x] Add optional margin finger cleanup globally and per page.
 - [x] Integrate processed review previews, OCR, and PDF export.
 - [x] Test processing rules and browser image-to-PDF output.
-- [ ] Verify signed-in desktop/mobile editor flow. Blocked: no requesting-user account/session; sign-in is required.
+- [ ] Verify signed-in desktop/mobile editor flow and real navigation speed. Blocked: requesting-user session mint failed because no matching app account exists; preview sign-in is required.

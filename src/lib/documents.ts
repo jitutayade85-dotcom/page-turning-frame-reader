@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const documentsQuery = queryOptions({
   queryKey: ["documents"],
+  staleTime: 30_000,
   queryFn: async () => {
     const { data, error } = await supabase.from("documents").select("*").order("created_at", { ascending: false });
     if (error) throw error;
@@ -12,11 +13,14 @@ export const documentsQuery = queryOptions({
 
 export const profileQuery = queryOptions({
   queryKey: ["profile"],
+  staleTime: 30_000,
   queryFn: async () => {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return null;
-    const { data } = await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle();
-    return { user: u.user, profile: data };
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) return null;
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (error) throw error;
+    return { user, profile: data };
   },
 });
 

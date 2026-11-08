@@ -1,4 +1,5 @@
 # Scan enhancements
+- [ ] Use local session checks for internal routes, preload tab links on intent, confirm existing font preconnect/swap; leave 2.8-second splash unchanged.
 - [x] Set book intro to 2.8 seconds; verify timing, skipping and return visits with tests and desktop/mobile browser checks.
 - [x] Diagnose repeated display auth requests and immediate query refetches; reuse local display sessions and fresh data, defer PDF engine until export. Three regression checks failed before and pass after changes; public desktop/mobile controls verified.
 - [x] Optimize splash timing and returning-user dismissal.

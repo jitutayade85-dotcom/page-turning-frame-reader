@@ -1,4 +1,6 @@
 # Scan enhancements
+- [ ] Set book intro to 2.8 seconds and verify skipping/return visits.
+- [ ] Diagnose and improve slow website responses; verify relevant flows.
 - [x] Optimize splash timing and returning-user dismissal.
 - [x] Replace pixel sorting with histogram contrast thresholds.
 - [x] Cache and schedule processed previews with safe resource cleanup.

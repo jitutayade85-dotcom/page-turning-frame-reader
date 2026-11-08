@@ -5,10 +5,13 @@ import { SplashScreen } from "../components/SplashScreen";
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 describe("brief splash startup", () => {
-  it("starts exiting after 600ms and disappears after its smooth exit", () => {
+  it("keeps the intro visible for 2.8 seconds and disappears after its smooth exit", () => {
     const view = render(<SplashScreen />);
     expect(view.queryByRole("button", { name: "Skip intro" })).not.toBeNull();
-    act(() => vi.advanceTimersByTime(600));
+    act(() => vi.advanceTimersByTime(2799));
+    expect(view.queryByRole("button", { name: "Skip intro" })?.className).not.toContain("opacity-0");
+    act(() => vi.advanceTimersByTime(1));
+    expect(view.queryByRole("button", { name: "Skip intro" })?.className).toContain("opacity-0");
     act(() => vi.advanceTimersByTime(200));
     expect(view.queryByRole("button", { name: "Skip intro" })).toBeNull();
   });

@@ -7,13 +7,20 @@ export function useAuthUser() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data }) => {
+    let sessionEventReceived = false;
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (!active) return;
-      setUser(data.user ?? null);
+      sessionEventReceived = true;
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
+    // UI only: access checks remain in the route gate, server handlers and RLS.
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active || sessionEventReceived) return;
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    }).catch(() => {
+      if (active && !sessionEventReceived) setLoading(false);
     });
     return () => {
       active = false;

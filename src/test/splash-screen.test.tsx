@@ -1,4 +1,4 @@
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SplashScreen } from "../components/SplashScreen";
 
@@ -21,5 +21,11 @@ describe("brief splash startup", () => {
     sessionStorage.clear();
     const next = render(<SplashScreen />);
     expect(next.queryByRole("button", { name: "Skip intro" })).toBeNull();
+  });
+  it("allows skipping without waiting for the intro duration", () => {
+    const view = render(<SplashScreen />);
+    fireEvent.click(view.getByRole("button", { name: "Skip intro" }));
+    act(() => vi.advanceTimersByTime(200));
+    expect(view.queryByRole("button", { name: "Skip intro" })).toBeNull();
   });
 });

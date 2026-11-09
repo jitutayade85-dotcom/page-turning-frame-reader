@@ -122,7 +122,8 @@ function UsersPage() {
                     <Mail className="h-3 w-3 shrink-0" /> {u.email || "No email"}
                   </p>
                 </div>
-                <div className="shrink-0 text-xs text-muted-foreground sm:text-right">
+                </div>
+                <div className="shrink-0 pl-15 text-xs text-muted-foreground sm:pl-0 sm:text-right">
                   <p className="flex items-center gap-1.5 sm:justify-end">
                     <Clock className="h-3 w-3" /> Last login: {fmt(u.last_sign_in_at)}
                   </p>

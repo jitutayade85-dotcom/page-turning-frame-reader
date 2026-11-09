@@ -2,19 +2,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { Home, ScanLine, Library, Settings, LogOut, Wifi } from "lucide-react";
+import { Home, ScanLine, Library, Settings, LogOut, Wifi, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoMark } from "@/components/Logo";
 import { useAuthUser } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const tabs = [
-  { to: "/dashboard", label: "Home", icon: Home },
-  { to: "/library", label: "Library", icon: Library },
-  null,
-  { to: "/settings", label: "Settings", icon: Settings },
-] as const;
 
 export function useSignOut() {
   const qc = useQueryClient();
@@ -35,7 +29,15 @@ function greeting() {
 export function AppShell({ children }: { children: ReactNode }) {
   const signOut = useSignOut();
   const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const tabs = [
+    { to: "/dashboard", label: "Home", icon: Home },
+    { to: "/library", label: "Library", icon: Library },
+    null,
+    ...(isAdmin ? [{ to: "/users", label: "Users", icon: Users }] : []),
+    { to: "/settings", label: "Settings", icon: Settings },
+  ] as const;
   const name = (user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Reader") as string;
   const initial = name.charAt(0).toUpperCase();
 
@@ -73,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Bottom tab bar */}
         <nav aria-label="Main navigation" className="absolute inset-x-3 bottom-[max(env(safe-area-inset-bottom),0.75rem)] z-30 md:static md:col-start-1 md:row-start-2 md:border-r md:bg-card/60 md:p-4">
-          <div className="relative grid h-16 grid-cols-5 items-center rounded-3xl border bg-card/95 shadow-soft backdrop-blur-xl md:flex md:h-auto md:flex-col md:items-stretch md:gap-2 md:rounded-none md:border-0 md:bg-transparent md:shadow-none md:backdrop-blur-none">
+          <div className={cn("relative grid h-16 items-center rounded-3xl border bg-card/95 shadow-soft backdrop-blur-xl md:flex md:h-auto md:flex-col md:items-stretch md:gap-2 md:rounded-none md:border-0 md:bg-transparent md:shadow-none md:backdrop-blur-none", isAdmin ? "grid-cols-6" : "grid-cols-5")}>
             {tabs.slice(0, 2).map((t) => <Tab key={t.to} t={t} active={path.startsWith(t.to)} />)}
             <div className="flex justify-center md:my-2">
               <Link to="/scan" preload="intent" aria-label="Scan" className={cn("-mt-9 flex h-16 w-16 items-center justify-center rounded-full border-4 border-background bg-gradient-gold text-primary-foreground shadow-gold transition-transform hover:scale-105 active:scale-90 md:mt-0 md:h-12 md:w-full md:gap-3 md:rounded-xl md:border-0 md:hover:scale-100", path.startsWith("/scan") && "ring-4 ring-gold-bright/40")}>

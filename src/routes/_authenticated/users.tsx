@@ -103,8 +103,9 @@ function UsersPage() {
             return (
               <li
                 key={u.id}
-                className="flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-soft"
+                className="flex flex-col gap-2 rounded-2xl border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:gap-4"
               >
+                <div className="flex min-w-0 flex-1 items-center gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-pale font-display text-lg font-bold text-primary">
                   {name.charAt(0).toUpperCase()}
                 </span>
@@ -121,11 +122,12 @@ function UsersPage() {
                     <Mail className="h-3 w-3 shrink-0" /> {u.email || "No email"}
                   </p>
                 </div>
-                <div className="shrink-0 text-right text-xs text-muted-foreground">
-                  <p className="flex items-center justify-end gap-1.5">
+                </div>
+                <div className="shrink-0 pl-15 text-xs text-muted-foreground sm:pl-0 sm:text-right">
+                  <p className="flex items-center gap-1.5 sm:justify-end">
                     <Clock className="h-3 w-3" /> Last login: {fmt(u.last_sign_in_at)}
                   </p>
-                  <p className="mt-1 flex items-center justify-end gap-1.5">
+                  <p className="mt-1 flex items-center gap-1.5 sm:justify-end">
                     <CalendarDays className="h-3 w-3" /> Joined: {fmt(u.created_at)}
                   </p>
                 </div>

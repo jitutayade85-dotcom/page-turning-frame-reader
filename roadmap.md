@@ -1,4 +1,5 @@
 # Scan enhancements
+- [x] Add admin-only Users page listing registered users with email, join date and last login; admin role granted to jitutayade85@gmail.com, login tracking synced from auth into profiles. Verified signed-in on desktop and mobile.
 - [x] Use local session checks for internal routes and preload all shell tab links on intent; confirmed existing font preconnect/swap in browser and preserved 2.8-second splash. All 26 tests pass; signed-out protection verified.
 - [x] Set book intro to 2.8 seconds; verify timing, skipping and return visits with tests and desktop/mobile browser checks.
 - [x] Diagnose repeated display auth requests and immediate query refetches; reuse local display sessions and fresh data, defer PDF engine until export. Three regression checks failed before and pass after changes; public desktop/mobile controls verified.

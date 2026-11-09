@@ -105,6 +105,7 @@ function UsersPage() {
                 key={u.id}
                 className="flex flex-col gap-2 rounded-2xl border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:gap-4"
               >
+                <div className="flex min-w-0 flex-1 items-center gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-pale font-display text-lg font-bold text-primary">
                   {name.charAt(0).toUpperCase()}
                 </span>

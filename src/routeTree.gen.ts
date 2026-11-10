@@ -23,6 +23,8 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as ApiBookChatRouteImport } from './routes/api/book-chat'
 import { Route as ApiBookSpeechRouteImport } from './routes/api/book-speech'
+import { Route as AuthenticatedBookDocIdRouteImport } from './routes/_authenticated/book.$docId'
+import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authenticated/chat.$chatId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +95,16 @@ const ApiBookSpeechRoute = ApiBookSpeechRouteImport.update({
   path: '/api/book-speech',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedBookDocIdRoute = AuthenticatedBookDocIdRouteImport.update({
+  id: '/book/$docId',
+  path: '/book/$docId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatChatIdRoute = AuthenticatedChatChatIdRouteImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -108,6 +120,8 @@ export interface FileRoutesByFullPath {
   '/users': typeof AuthenticatedUsersRoute
   '/api/book-chat': typeof ApiBookChatRoute
   '/api/book-speech': typeof ApiBookSpeechRoute
+  '/book/$docId': typeof AuthenticatedBookDocIdRoute
+  '/chat/$chatId': typeof AuthenticatedChatChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,6 +137,8 @@ export interface FileRoutesByTo {
   '/users': typeof AuthenticatedUsersRoute
   '/api/book-chat': typeof ApiBookChatRoute
   '/api/book-speech': typeof ApiBookSpeechRoute
+  '/book/$docId': typeof AuthenticatedBookDocIdRoute
+  '/chat/$chatId': typeof AuthenticatedChatChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,6 +156,8 @@ export interface FileRoutesById {
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/api/book-chat': typeof ApiBookChatRoute
   '/api/book-speech': typeof ApiBookSpeechRoute
+  '/_authenticated/book/$docId': typeof AuthenticatedBookDocIdRoute
+  '/_authenticated/chat/$chatId': typeof AuthenticatedChatChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +175,8 @@ export interface FileRouteTypes {
     | '/users'
     | '/api/book-chat'
     | '/api/book-speech'
+    | '/book/$docId'
+    | '/chat/$chatId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -172,6 +192,8 @@ export interface FileRouteTypes {
     | '/users'
     | '/api/book-chat'
     | '/api/book-speech'
+    | '/book/$docId'
+    | '/chat/$chatId'
   id:
     | '__root__'
     | '/'
@@ -188,6 +210,8 @@ export interface FileRouteTypes {
     | '/_authenticated/users'
     | '/api/book-chat'
     | '/api/book-speech'
+    | '/_authenticated/book/$docId'
+    | '/_authenticated/chat/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -302,6 +326,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBookSpeechRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/book/$docId': {
+      id: '/_authenticated/book/$docId'
+      path: '/book/$docId'
+      fullPath: '/book/$docId'
+      preLoaderRoute: typeof AuthenticatedBookDocIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat/$chatId': {
+      id: '/_authenticated/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof AuthenticatedChatChatIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -311,6 +349,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
+  AuthenticatedBookDocIdRoute: typeof AuthenticatedBookDocIdRoute
+  AuthenticatedChatChatIdRoute: typeof AuthenticatedChatChatIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -319,6 +359,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
+  AuthenticatedBookDocIdRoute: AuthenticatedBookDocIdRoute,
+  AuthenticatedChatChatIdRoute: AuthenticatedChatChatIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
 import { buildEpub, toBlocks, hasText } from "@/lib/book-export";

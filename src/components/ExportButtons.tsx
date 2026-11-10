@@ -7,7 +7,7 @@ import { exportBook, hasText } from "@/lib/book-export";
 export function ExportButtons({ title, pages, size = "default" }: { title: string; pages: string[] | null | undefined; size?: "default" | "sm" }) {
   const [busy, setBusy] = useState<string | null>(null);
   async function run(format: "epub" | "docx") {
-    if (!hasText(pages)) { toast.info("This book has no recognised text. Create it as a searchable scan to export EPUB or Word.");
+    if (!hasText(pages)) { toast.info("This book has no recognised text. Create it as a searchable scan to export EPUB or Word."); return; }
     setBusy(format);
     try { await exportBook(format, { title, pages: pages ?? [] }); }
     catch (e) { toast.error((e as Error).message); }

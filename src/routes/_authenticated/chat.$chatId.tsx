@@ -14,7 +14,7 @@ import { LogoMark } from "@/components/Logo";
 import { authHeader, chatQuery, createChat, QUICK_PROMPTS } from "@/lib/book-chats";
 
 export const Route = createFileRoute("/_authenticated/chat/$chatId")({
-  validateSearch: (s: Record<string, unknown>): { prompt?: string } => (typeof s.prompt === "string" ? { prompt: s.prompt } : {}),
+  validateSearch: (s: Record<string, unknown>): { prompt?: string } => (typeof s["prompt"] === "string" ? { prompt: s["prompt"] } : {}),
   head: () => ({ meta: [{ title: "Book chat — BookScan AI" }, { name: "description", content: "Ask questions about your scanned book." }, { property: "og:title", content: "Book chat — BookScan AI" }, { property: "og:description", content: "Chat with your scanned book, get summaries and study notes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ChatPage,
 });

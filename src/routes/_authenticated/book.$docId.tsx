@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 type Tab = "chat" | "listen" | "text";
 
 export const Route = createFileRoute("/_authenticated/book/$docId")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({ tab: s.tab === "listen" || s.tab === "text" ? s.tab : undefined }),
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => (s["tab"] === "listen" || s["tab"] === "text" ? { tab: s["tab"] } : {}),
   head: () => ({ meta: [{ title: "Book — BookScan AI" }, { name: "description", content: "Chat with, summarise, listen to and export your scanned book." }, { property: "og:title", content: "Book — BookScan AI" }, { property: "og:description", content: "Chat, summaries, audiobook mode and EPUB/Word export for your scanned book." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: BookPage,
 });

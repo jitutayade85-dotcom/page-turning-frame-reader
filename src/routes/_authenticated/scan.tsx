@@ -19,6 +19,7 @@ import { ocrPage } from "@/lib/account.functions";
 import { usePagePreview } from "@/hooks/use-page-preview";
 import { previewKey } from "@/lib/preview-cache";
 import { readPages } from "@/lib/ocr-batch";
+import { ExportButtons } from "@/components/ExportButtons";
 
 export const Route = createFileRoute("/_authenticated/scan")({
   validateSearch: (s: Record<string, unknown>): { start?: "upload" | "record" } => ({
@@ -281,7 +282,7 @@ function Exporter({ pages }: { pages: Page[] }) {
     const path = `${u.user.id}/${crypto.randomUUID()}.pdf`;
     const up = await supabase.storage.from("pdfs").upload(path, new Blob([pdf.bytes as BlobPart], { type: "application/pdf" }), { contentType: "application/pdf" });
     if (up.error) { setBusy(null); return toast.error(up.error.message); }
-    const { error } = await supabase.from("documents").insert({ title: opts.title, file_path: path, page_count: pdf.texts.length, file_size: pdf.bytes.byteLength, searchable, user_id: u.user.id });
+    const { error } = await supabase.from("documents").insert({ title: opts.title, file_path: path, page_count: pdf.texts.length, file_size: pdf.bytes.byteLength, searchable, user_id: u.user.id, page_texts: pdf.texts });
     setBusy(null);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["documents"] });
@@ -316,7 +317,9 @@ function Exporter({ pages }: { pages: Page[] }) {
             <Button variant="gold" className="rounded-xl" onClick={save} disabled={!!busy}><Save /> Save to library</Button>
             <Button variant="outline" className="rounded-xl" asChild><a href={pdf.url} download={`${opts.title}.pdf`}><Download /> Download</a></Button>
             <Button variant="outline" className="rounded-xl" onClick={share}><Share2 /> Share</Button>
+            <ExportButtons title={opts.title} pages={pdf.texts} />
           </div>
+          {!pdf.texts.some(Boolean) && <p className="text-xs text-muted-foreground">Turn on "Searchable PDF" to export EPUB/Word and to chat with or listen to this book.</p>}
           {pdf.texts.some(Boolean) && (
             <details className="rounded-2xl bg-pale/50 p-4"><summary className="cursor-pointer font-medium">Extracted text</summary>
               {pdf.texts.map((t, i) => <div key={i} className="mt-3"><div className="flex justify-between text-xs font-semibold">Page {i + 1}<button onClick={() => navigator.clipboard.writeText(t).then(() => toast.success("Copied"))} className="text-primary">Copy</button></div><pre className="whitespace-pre-wrap font-sans text-sm">{t}</pre></div>)}

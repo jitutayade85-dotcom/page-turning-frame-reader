@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      book_chat_messages: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          message_id: string
+          parts: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          parts?: Json
+          role: string
+          user_id?: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          parts?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "book_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_chats: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_chats_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string
@@ -21,6 +94,7 @@ export type Database = {
           file_size: number
           id: string
           page_count: number
+          page_texts: string[]
           searchable: boolean
           source: string
           title: string
@@ -32,6 +106,7 @@ export type Database = {
           file_size?: number
           id?: string
           page_count?: number
+          page_texts?: string[]
           searchable?: boolean
           source?: string
           title: string
@@ -43,6 +118,7 @@ export type Database = {
           file_size?: number
           id?: string
           page_count?: number
+          page_texts?: string[]
           searchable?: boolean
           source?: string
           title?: string

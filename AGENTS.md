@@ -16,3 +16,5 @@
 - Use local sessions for the client-only route gate and display user/profile identity, retaining server/RLS enforcement; reuse document/profile queries briefly with explicit mutation invalidation to avoid repeated navigation requests.
 - Preload shell navigation links on intent so tab assets load ahead of navigation; leave query freshness under TanStack Query control.
 - Load the PDF engine at export time rather than importing it with the scan screen, so navigation does not parse export-only dependencies.
+- Store OCR page text on each document and build chat context, read-aloud and EPUB/Word exports from it, so every text feature reads the same ordered pages.
+- Stream book chat and speech through authenticated server routes that verify the caller's bearer token and act as that user, keeping AI keys server-side.

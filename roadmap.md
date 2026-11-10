@@ -14,3 +14,4 @@
 - [x] Integrate processed review previews, OCR, and PDF export.
 - [x] Test processing rules and browser image-to-PDF output.
 - [ ] Verify signed-in desktop/mobile editor flow and real navigation speed. Blocked: requesting-user session mint failed because no matching app account exists; preview sign-in is required.
+- [x] Book chat (saved multi-chat threads, summaries/takeaways/study notes), audiobook player (speed, Hindi/English, voices), EPUB/Word export in scan result and library. Chat + reload and speech verified signed-in; export tests pass.

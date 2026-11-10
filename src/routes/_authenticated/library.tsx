@@ -3,12 +3,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Search, Download, Trash2, Pencil, Eye, Share2, Plus } from "lucide-react";
+import { FileText, Search, Download, Trash2, Pencil, Eye, Share2, Plus, MessageCircle, Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ExportButtons } from "@/components/ExportButtons";
 import { documentsQuery, formatBytes, signedUrl } from "@/lib/documents";
 
 export const Route = createFileRoute("/_authenticated/library")({
@@ -90,6 +91,11 @@ function LibraryPage() {
                 <IconBtn label="Share" onClick={() => share(d)}><Share2 /></IconBtn>
                 <IconBtn label="Rename" onClick={() => setRename({ doc: d, title: d.title })}><Pencil /></IconBtn>
                 <IconBtn label="Delete" onClick={() => setDel(d)}><Trash2 className="text-destructive" /></IconBtn>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="gold" className="rounded-xl" asChild><Link to="/book/$docId" params={{ docId: d.id }}><MessageCircle /> Chat</Link></Button>
+                <Button size="sm" variant="outline" className="rounded-xl" asChild><Link to="/book/$docId" params={{ docId: d.id }} search={{ tab: "listen" }}><Headphones /> Listen</Link></Button>
+                <ExportButtons title={d.title} pages={d.page_texts} size="sm" />
               </div>
             </div>
           ))}

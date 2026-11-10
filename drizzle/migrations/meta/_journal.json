@@ -15,6 +15,13 @@
       "when": 1794215369883,
       "tag": "0001_add_user_roles_and_login_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794321307939,
+      "tag": "0002_book_text_and_chats",
+      "breakpoints": true
     }
   ]
 }

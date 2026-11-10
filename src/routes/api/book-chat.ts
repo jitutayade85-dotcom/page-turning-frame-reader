@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/book-chat")({
 
         // Save the newest user message before streaming.
         const last = body.messages[body.messages.length - 1];
-        if (last.role === "user") {
+        if (last && last.role === "user") {
           const { error } = await supabase.from("book_chat_messages").upsert({ chat_id: chat.id, user_id: userId, message_id: last.id, role: "user", parts: last.parts as never }, { onConflict: "chat_id,message_id" });
           if (error) return json(500, "Couldn't save your message.");
           if (chat.title === "New chat") {

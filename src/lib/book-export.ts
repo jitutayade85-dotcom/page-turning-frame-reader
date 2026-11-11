@@ -1,7 +1,7 @@
 /** Text exports (EPUB, Word) built from OCR page text, in page order. */
 export type BookText = { title: string; pages: string[] };
 
-const HEADING = /^(chapter|part|section|prologue|epilogue|introduction|contents|अध्याय|भाग|प्रस्तावना)\b/i;
+const HEADING = /^(?:(?:chapter|part|section|prologue|epilogue|introduction|contents)\b|(?:अध्याय|भाग|प्रस्तावना)(?:\s|$))/i;
 export function isHeading(line: string) {
   const t = line.trim();
   if (!t || t.length > 70) return false;
@@ -39,7 +39,7 @@ export async function buildDocx({ title, pages }: BookText): Promise<Blob> {
     } else if (b.kind === "heading") children.push(new Paragraph({ text: b.text, heading: HeadingLevel.HEADING_1 }));
     else children.push(new Paragraph({ text: b.text, spacing: { after: 160 } }));
   });
-  const doc = new Document({ creator: "BookScan AI", title, sections: [{ children }] });
+  const doc = new Document({ creator: "BookScan AI", title, styles: { default: { document: { run: { font: "Arial", size: 24 } } } }, sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } }, children }] });
   return Packer.toBlob(doc);
 }
 
@@ -69,7 +69,7 @@ export async function buildEpub({ title, pages }: BookText): Promise<Blob> {
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
+  a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 

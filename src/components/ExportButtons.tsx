@@ -4,10 +4,10 @@ import { BookOpen, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportBook, hasText } from "@/lib/book-export";
 
-export function ExportButtons({ title, pages, size = "default" }: { title: string; pages: string[] | null | undefined; size?: "default" | "sm" }) {
+export function ExportButtons({ title, pages, size = "default", onPrepare }: { title: string; pages: string[] | null | undefined; size?: "default" | "sm"; onPrepare?: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   async function run(format: "epub" | "docx") {
-    if (!hasText(pages)) { toast.info("This book has no recognised text. Create it as a searchable scan to export EPUB or Word."); return; }
+    if (!hasText(pages)) { if (onPrepare) onPrepare(); else toast.info("This book has no recognised text. Turn on Searchable PDF and generate it again to export EPUB or Word."); return; }
     setBusy(format);
     try { await exportBook(format, { title, pages: pages ?? [] }); }
     catch (e) { toast.error((e as Error).message); }

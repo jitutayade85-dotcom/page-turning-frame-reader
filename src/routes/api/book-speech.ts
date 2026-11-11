@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { userClient, json, gatewayMessage } from "@/lib/ai/book-auth.server";
+import { userClient, json } from "@/lib/ai/book-auth.server";
 
 const MODEL = "google/gemini-3.1-flash-tts-preview";
 const VOICES = ["Kore", "Puck", "Charon", "Aoede"];
@@ -16,7 +16,8 @@ export const Route = createFileRoute("/api/book-speech")({
         const text = body?.text?.trim();
         if (!text) return json(400, "This page has no text to read.");
         if (text.length > 6000) return json(400, "This page is too long to read aloud.");
-        const voice = VOICES.includes(body?.voice ?? "") ? body!.voice! : "Kore";
+        const requestedVoice = body?.voice;
+        const voice = requestedVoice && VOICES.includes(requestedVoice) ? requestedVoice : "Kore";
         const lang = body?.language === "hi" ? "Read the following aloud in clear, natural Hindi" : body?.language === "en" ? "Read the following aloud in clear, natural English" : "Read the following aloud naturally, in the language it is written in";
         const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
           method: "POST",
@@ -26,11 +27,13 @@ export const Route = createFileRoute("/api/book-speech")({
             model: MODEL,
             contents: [{ role: "user", parts: [{ text: `${lang}:\n\n${text}` }] }],
             generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
-            stream_format: "audio",
+            stream_format: "sse",
           }),
         });
-        if (!res.ok || !res.body) { console.error("speech", res.status, await res.text().catch(() => "")); return json(res.status === 429 || res.status === 402 || res.status === 403 ? res.status : 502, gatewayMessage(res.status)); }
-        return new Response(res.body, { headers: { "content-type": res.headers.get("content-type") ?? "audio/wav", "cache-control": "no-store" } });
+        if (!res.ok || !res.body) { const payload = await res.json().catch(() => ({})); return json(res.ok ? 502 : res.status, payload.message ?? payload.error?.message ?? `Read-aloud failed (${res.status}).`); }
+        const headers = new Headers({ "content-type": res.headers.get("content-type") ?? "text/event-stream", "cache-control": "no-store" });
+        res.headers.forEach((value, name) => { if (name.toLowerCase().startsWith("x-lovable-aig-")) headers.set(name, value); });
+        return new Response(res.body, { headers });
       },
     },
   },

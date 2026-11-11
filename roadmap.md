@@ -1,4 +1,5 @@
 # Scan enhancements
+- [x] Make Chat, Listen, EPUB and Word usable for existing books: added saved-PDF text preparation, bounded streaming audio and reliable downloads. Signed-in text recovery, chat/follow-up/reload, audio pause/resume/speed/stop and both download contents verified; 35 tests pass. Image-only OCR recovery and Hindi pronunciation remain unverified.
 - [x] Add admin-only Users page listing registered users with email, join date and last login; admin role granted to jitutayade85@gmail.com, login tracking synced from auth into profiles. Verified signed-in on desktop and mobile.
 - [x] Use local session checks for internal routes and preload all shell tab links on intent; confirmed existing font preconnect/swap in browser and preserved 2.8-second splash. All 26 tests pass; signed-out protection verified.
 - [x] Set book intro to 2.8 seconds; verify timing, skipping and return visits with tests and desktop/mobile browser checks.

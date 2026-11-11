@@ -18,3 +18,5 @@
 - Load the PDF engine at export time rather than importing it with the scan screen, so navigation does not parse export-only dependencies.
 - Store OCR page text on each document and build chat context, read-aloud and EPUB/Word exports from it, so every text feature reads the same ordered pages.
 - Stream book chat and speech through authenticated server routes that verify the caller's bearer token and act as that user, keeping AI keys server-side.
+- Recover missing book text from saved PDFs with a lazy browser PDF reader before sequential OCR; persist each completed page so existing books work without rescanning and interrupted work can resume.
+- Play speech as ordered, Unicode-bounded PCM streams with a single owned audio clock and bounded complete-chunk cache, so long pages are never truncated and unmount cancels playback.

@@ -9,7 +9,15 @@ import { ocrPage } from "@/lib/account.functions";
 import { signedUrl } from "@/lib/documents";
 import { pdfPageText } from "@/lib/book-text";
 
-export function PrepareBookText({ docId, filePath, existing }: { docId: string; filePath: string; existing: string[] }) {
+export function PrepareBookText({
+  docId,
+  filePath,
+  existing,
+}: {
+  docId: string;
+  filePath: string;
+  existing: string[];
+}) {
   const ocr = useServerFn(ocrPage);
   const qc = useQueryClient();
   const [progress, setProgress] = useState<string | null>(null);
@@ -43,23 +51,35 @@ export function PrepareBookText({ docId, filePath, existing }: { docId: string; 
           let text = pdfPageText(content.items);
           if (!text) {
             const base = page.getViewport({ scale: 1 });
-            const viewport = page.getViewport({ scale: Math.min(2, 1600 / Math.max(base.width, base.height)) });
+            const viewport = page.getViewport({
+              scale: Math.min(2, 1600 / Math.max(base.width, base.height)),
+            });
             const canvas = document.createElement("canvas");
-            canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
             const context = canvas.getContext("2d");
             if (!context) throw new Error("Page images could not be opened.");
             await page.render({ canvas, canvasContext: context, viewport }).promise;
             abort.signal.throwIfAborted();
-            const result = await ocr({ data: { image: canvas.toDataURL("image/jpeg", 0.85) }, signal: abort.signal });
+            const result = await ocr({
+              data: { image: canvas.toDataURL("image/jpeg", 0.85) },
+              signal: abort.signal,
+            });
             text = result.text;
-            canvas.width = 0; canvas.height = 0;
+            canvas.width = 0;
+            canvas.height = 0;
           }
           texts[i] = text;
           // Save each finished page so cancellation or a later failure does not lose work.
-          const { error } = await supabase.from("documents").update({ page_texts: [...texts] }).eq("id", docId);
+          const { error } = await supabase
+            .from("documents")
+            .update({ page_texts: [...texts] })
+            .eq("id", docId);
           if (error) throw error;
           updated++;
-        } finally { page.cleanup(); }
+        } finally {
+          page.cleanup();
+        }
       }
       if (!texts.some((text) => text.trim())) toast.info("No readable text was found in this PDF.");
       else toast.success(`Book text ready${updated ? ` · ${updated} pages read` : ""}`);
@@ -70,12 +90,29 @@ export function PrepareBookText({ docId, filePath, existing }: { docId: string; 
       await cleanup?.();
       controller.current = null;
       setProgress(null);
-      await Promise.all([qc.invalidateQueries({ queryKey: ["document", docId] }), qc.invalidateQueries({ queryKey: ["documents"] })]);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["document", docId] }),
+        qc.invalidateQueries({ queryKey: ["documents"] }),
+      ]);
     }
   }
 
-  return <div className="flex flex-wrap items-center justify-center gap-3">
-    <Button variant="gold" className="rounded-xl" disabled={!!progress} onClick={prepare}>{progress ? <Loader2 className="animate-spin" /> : <ScanText />}{progress ?? "Prepare book text"}</Button>
-    {progress && <Button variant="outline" size="icon" aria-label="Stop text recognition" onClick={() => controller.current?.abort()}><Square /></Button>}
-  </div>;
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <Button variant="gold" className="rounded-xl" disabled={!!progress} onClick={prepare}>
+        {progress ? <Loader2 className="animate-spin" /> : <ScanText />}
+        {progress ?? "Prepare book text"}
+      </Button>
+      {progress && (
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Stop text recognition"
+          onClick={() => controller.current?.abort()}
+        >
+          <Square />
+        </Button>
+      )}
+    </div>
+  );
 }

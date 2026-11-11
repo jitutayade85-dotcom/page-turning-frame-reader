@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Loader2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authHeader } from "@/lib/book-chats";
 import { cn } from "@/lib/utils";
+import { chunkText } from "@/lib/book-text";
+import { SpeechPlayer } from "@/lib/speech-player";
 
 const SPEEDS = [1, 1.25, 1.5, 2];
 const VOICES = [{ id: "Kore", label: "Kore (female)" }, { id: "Aoede", label: "Aoede (female)" }, { id: "Puck", label: "Puck (male)" }, { id: "Charon", label: "Charon (male)" }];
@@ -14,53 +16,49 @@ export function AudioPlayer({ pages }: { pages: string[] }) {
   const [lang, setLang] = useState<"auto" | "en" | "hi">("auto");
   const [voice, setVoice] = useState("Kore");
   const [state, setState] = useState<"idle" | "loading" | "playing" | "paused">("idle");
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const cache = useRef(new Map<string, string>());
+  const audio = useRef<SpeechPlayer | null>(null);
   const abort = useRef<AbortController | null>(null);
-  const autoNext = useRef(false);
+  const paused = useRef(false);
 
-  useEffect(() => () => { abort.current?.abort(); audio.current?.pause(); cache.current.forEach((u) => URL.revokeObjectURL(u)); }, []);
-  useEffect(() => { if (audio.current) audio.current.playbackRate = speed; }, [speed]);
+  useEffect(() => () => { abort.current?.abort(); void audio.current?.close(); }, []);
+  useEffect(() => { audio.current?.setSpeed(speed); }, [speed]);
   // Changing voice or language stops playback so the next play uses the new choice.
   useEffect(() => { stop(); }, [voice, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function stop() { abort.current?.abort(); audio.current?.pause(); autoNext.current = false; setState("idle"); }
+  function stop() { abort.current?.abort(); audio.current?.stop(); paused.current = false; setState("idle"); }
 
   async function play(index = page) {
     const text = pages[index]?.trim();
     if (!text) { toast.info(`Page ${index + 1} has no recognised text.`); return; }
-    if (state === "paused" && index === page && audio.current) { await audio.current.play(); setState("playing"); return; }
+    if (state === "paused" && index === page && audio.current) { paused.current = false; await audio.current.resume(); setState("playing"); return; }
     abort.current?.abort();
-    audio.current?.pause();
-    const key = `${index}|${voice}|${lang}`;
-    let url = cache.current.get(key);
-    if (!url) {
-      setState("loading");
-      abort.current = new AbortController();
-      try {
-        const res = await fetch("/api/book-speech", { method: "POST", signal: abort.current.signal, headers: { "Content-Type": "application/json", ...(await authHeader()) }, body: JSON.stringify({ text, voice, language: lang === "auto" ? undefined : lang }) });
-        if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || `Read-aloud failed (${res.status}).`); }
-        url = URL.createObjectURL(await res.blob());
-        cache.current.set(key, url);
-      } catch (e) {
-        if ((e as Error).name !== "AbortError") toast.error((e as Error).message);
-        setState("idle"); return;
+    const player = audio.current ?? (audio.current = new SpeechPlayer());
+    player.stop(); player.setSpeed(speed);
+    const controller = new AbortController(); abort.current = controller;
+    paused.current = false;
+    setState("loading"); setPage(index);
+    try {
+      await player.resume();
+      const headers = await authHeader();
+      for (let i = index; i < pages.length; i++) {
+        controller.signal.throwIfAborted();
+        if (!pages[i]?.trim()) continue;
+        setPage(i);
+        for (const chunk of chunkText(pages[i] ?? "")) {
+          await player.play(chunk, voice, lang, headers, controller.signal, () => { if (!paused.current) setState("playing"); });
+        }
+      }
+      if (abort.current === controller) setState("idle");
+    } catch (error) {
+      if (abort.current === controller) {
+        setState("idle");
+        if ((error as Error).name !== "AbortError") toast.error((error as Error).message);
       }
     }
-    const el = audio.current ?? (audio.current = new Audio());
-    el.src = url;
-    el.playbackRate = speed;
-    el.onended = () => {
-      const next = pages.findIndex((p, i) => i > index && p?.trim());
-      if (autoNext.current && next >= 0) { setPage(next); void play(next); } else setState("idle");
-    };
-    autoNext.current = true;
-    setPage(index);
-    try { await el.play(); setState("playing"); } catch { setState("idle"); toast.error("Playback was blocked by the browser. Tap play again."); }
   }
 
   function toggle() {
-    if (state === "playing") { audio.current?.pause(); setState("paused"); }
+    if (state === "playing") { paused.current = true; void audio.current?.pause(); setState("paused"); }
     else if (state !== "loading") void play();
   }
   function go(delta: number) {
@@ -78,9 +76,10 @@ export function AudioPlayer({ pages }: { pages: string[] }) {
       </div>
       <div className="flex items-center justify-center gap-4">
         <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" aria-label="Previous page" disabled={page === 0} onClick={() => go(-1)}><ChevronLeft /></Button>
-        <Button variant="gold" className="h-16 w-16 rounded-full" aria-label={state === "playing" ? "Pause" : "Play"} onClick={toggle}>{state === "loading" ? <Loader2 className="animate-spin" /> : state === "playing" ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}</Button>
+        <Button variant="gold" className="h-16 w-16 rounded-full" disabled={state === "loading"} aria-label={state === "playing" ? "Pause" : "Play"} onClick={toggle}>{state === "loading" ? <Loader2 className="animate-spin" /> : state === "playing" ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}</Button>
         <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" aria-label="Next page" disabled={page >= pages.length - 1} onClick={() => go(1)}><ChevronRight /></Button>
       </div>
+      {(state === "loading" || state === "playing" || state === "paused") && <Button variant="outline" className="w-full rounded-xl" onClick={stop}>Stop</Button>}
       <div>
         <p className="mb-2 text-xs font-semibold text-muted-foreground">Speed</p>
         <div className="grid grid-cols-4 gap-2" role="group" aria-label="Playback speed">
